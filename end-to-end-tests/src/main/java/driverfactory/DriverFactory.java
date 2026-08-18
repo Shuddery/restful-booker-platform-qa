@@ -2,19 +2,19 @@ package driverfactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 
 public class DriverFactory
 {
-    public WebDriver create() {
+    public WebDriver create(String selenoidUrlFromSetup) {
         // Проверяем переменную BROWSER. В Jenkinsfile мы можем передавать BROWSER=remote
         if(System.getenv("BROWSER") != null){
             if(System.getenv("BROWSER").equals("chrome")){

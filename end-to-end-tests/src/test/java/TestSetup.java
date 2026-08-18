@@ -5,8 +5,6 @@ import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
 
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
-import java.util.concurrent.TimeUnit;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
 
