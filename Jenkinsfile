@@ -40,26 +40,26 @@ pipeline {
             }
         }
 
-        stage('Run UI & API Tests') {
-            steps {
-                echo 'Starting Maven test execution strictly for E2E module...'
-                // Флаг -pl указывает Maven выполнять тесты ТОЛЬКО внутри папки end-to-end-tests
-                sh """
-                    mvn clean test -pl end-to-end-tests \
-                    -Dui.base.url=${BASE_UI_URL} \
-                    -Dremote.web.driver.url=${SELENOID_URL} \
-                    -Ddb.url=${DB_URL} \
-                    -Dkafka.bootstrap.servers=${KAFKA_BROKERS} \
-                    -Dwiremock.url=${WIREMOCK_URL} \
-                    -Dapi.booking.url=${API_BOOKING_URL} \
-                    -Dapi.room.url=${API_ROOM_URL} \
-                    -Dapi.branding.url=${API_BRANDING_URL} \
-                    -Dapi.auth.url=${API_AUTH_URL} \
-                    -Dapi.report.url=${API_REPORT_URL} \
-                    -Dapi.message.url=${API_MESSAGE_URL}
-                """
-            }
-        }
+                stage('Run UI & API Tests') {
+                    steps {
+                        echo 'Starting Maven test execution strictly using pom.xml path...'
+                        sh """
+                            mvn clean test -f end-to-end-tests/pom.xml \
+                            -Dui.base.url=${BASE_UI_URL} \
+                            -Dremote.web.driver.url=${SELENOID_URL} \
+                            -Ddb.url=${DB_URL} \
+                            -Dkafka.bootstrap.servers=${KAFKA_BROKERS} \
+                            -Dwiremock.url=${WIREMOCK_URL} \
+                            -Dapi.booking.url=${API_BOOKING_URL} \
+                            -Dapi.room.url=${API_ROOM_URL} \
+                            -Dapi.branding.url=${API_BRANDING_URL} \
+                            -Dapi.auth.url=${API_AUTH_URL} \
+                            -Dapi.report.url=${API_REPORT_URL} \
+                            -Dapi.message.url=${API_MESSAGE_URL}
+                        """
+                    }
+                }
+
     }
 
     post {
