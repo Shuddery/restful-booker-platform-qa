@@ -62,12 +62,13 @@ pipeline {
 
     }
 
-    post {
-        always {
-            echo 'Generating Allure Report from submodule target directory...'
-            // Указываем точный путь к результатам тестов внутри подмодуля
-            allure includeProperties: false, jdk: '', results: [[path: 'end-to-end-tests/target/allure-results']]
-        }
+        post {
+            always {
+                echo 'Generating Allure Report searching across all submodules...'
+                // Маска **/ заставит Jenkins найти папку allure-results, где бы она ни находилась
+                allure includeProperties: false, jdk: '', results: [[path: '**/allure-results']]
+            }
+
         success {
             echo '=================================================='
             echo 'Pipeline finished successfully! All tests passed.'

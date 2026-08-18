@@ -27,7 +27,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M7</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <!-- Явно указываем Maven, куда складывать результаты Allure -->
+                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
+
         </plugins>
     </build>
 
@@ -58,6 +65,7 @@
             <artifactId>webdrivermanager</artifactId>
             <version>6.3.4</version>
         </dependency>
+
     </dependencies>
 
 
