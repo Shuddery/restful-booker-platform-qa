@@ -2,18 +2,19 @@ pipeline {
     agent any
 
     environment {
-
         CI = 'true'
-        BROWSER = 'remote'
+        BROWSER = 'remote' // Указываем нашей фабрике DriverFactory использовать RemoteWebDriver
 
+        // UI точка входа (Фронтенд для Selenoid браузера внутри Docker сети)
         BASE_UI_URL           = 'http://rbp-assets:80'
+
+        // Инфраструктура внутри Docker сети
         SELENOID_URL          = 'http://selenoid:4444/wd/hub'
-
-
         DB_URL                = 'jdbc:mysql://hotel-db:3306/hotel_db'
         KAFKA_BROKERS         = 'kafka:29092'
         WIREMOCK_URL          = 'http://wiremock:8080'
 
+        // API Эндпоинты ВСЕХ микросервисов платформы для RestAssured тестов
         API_BOOKING_URL       = 'http://rbp-booking:3000'
         API_ROOM_URL          = 'http://rbp-room:3001'
         API_BRANDING_URL      = 'http://rbp-branding:3002'
@@ -23,13 +24,13 @@ pipeline {
     }
 
     tools {
-        jdk 'JDK21'
-        maven 'M3'
+        jdk 'JDK21'   // Имя вашей JDK из Global Tool Configuration в Jenkins
+        maven 'M3'    // Имя вашего Maven из Global Tool Configuration в Jenkins
     }
 
     options {
         timeout(time: 1, unit: 'HOURS')
-        ansiColor('xterm')
+        ansiColor('xterm') // Включает цветное отображение логов Maven в консоли
     }
 
     stages {
@@ -41,9 +42,10 @@ pipeline {
 
         stage('Run UI & API Tests') {
             steps {
-                echo 'Starting Maven test execution inside Docker network...'
+                echo 'Starting Maven test execution strictly for E2E module...'
+                // Флаг -pl указывает Maven выполнять тесты ТОЛЬКО внутри папки end-to-end-tests
                 sh """
-                    mvn clean test \
+                    mvn clean test -pl end-to-end-tests \
                     -Dui.base.url=${BASE_UI_URL} \
                     -Dremote.web.driver.url=${SELENOID_URL} \
                     -Ddb.url=${DB_URL} \
@@ -62,15 +64,19 @@ pipeline {
 
     post {
         always {
-            echo 'Generating Allure Report...'
-            // Путь к результатам тестов в Maven по умолчанию: target/allure-results
-            allure includeProperties: false, jdk: '', results: [[path: 'target/allure-results']]
+            echo 'Generating Allure Report from submodule target directory...'
+            // Указываем точный путь к результатам тестов внутри подмодуля
+            allure includeProperties: false, jdk: '', results: [[path: 'end-to-end-tests/target/allure-results']]
         }
         success {
+            echo '=================================================='
             echo 'Pipeline finished successfully! All tests passed.'
+            echo '=================================================='
         }
         failure {
-            echo 'Pipeline failed! Check test failures.'
+            echo '=================================================='
+            echo 'Pipeline failed! Check test failures or logs.'
+            echo '=================================================='
         }
     }
 }
