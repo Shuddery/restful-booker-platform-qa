@@ -14,57 +14,60 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 
 public class DriverFactory
 {
-    private static String OS = System.getProperty("os.name").toLowerCase();
-
     public WebDriver create() {
+        // Проверяем переменную BROWSER. В Jenkinsfile мы можем передавать BROWSER=remote
         if(System.getenv("BROWSER") != null){
             if(System.getenv("BROWSER").equals("chrome")){
                 return prepareChromeDriver();
             } else if (System.getenv("BROWSER").equals("remote")){
                 return prepareRemoteDriver();
             } else {
-                System.out.println("WARN: Browser option '" + System.getenv("browser") + "' not recognised. Falling back to ChromeDriver");
+                System.out.println("WARN: Browser option '" + System.getenv("BROWSER") + "' not recognised. Falling back to ChromeDriver");
                 return prepareChromeDriver();
             }
         }
 
-        System.out.println("WARN: No browser option detected. Defaulting to ChromeDriver but if you want to use a different browser please assign a browser to the env var 'browser'.");
+        // Если переменная не задана (например, запустили из IntelliJ IDEA), тоже проверяем системное свойство для Selenoid
+        if (System.getProperty("remote.web.driver.url") != null && !System.getProperty("remote.web.driver.url").isEmpty()) {
+            return prepareRemoteDriver();
+        }
+
+        System.out.println("WARN: No browser option detected. Defaulting to ChromeDriver.");
         return prepareChromeDriver();
     }
 
     private WebDriver prepareChromeDriver(){
         WebDriverManager.chromedriver().setup();
-
-        return new ChromeDriver();
+        ChromeOptions options = new ChromeOptions();
+        // Добавим базовые флаги для стабильности локального Chrome
+        options.addArguments("--remote-allow-origins=*");
+        return new ChromeDriver(options);
     }
 
     private WebDriver prepareRemoteDriver(){
-        if(System.getenv("SAUCE_USERNAME") == null){
-            throw new RuntimeException("To use remote driver a Sauce lab account is required. Please assign your Sauce labs account name to the environmental variable 'sauce_username'");
-        }
+        // Берем URL Selenoid из системных свойств (флаг -Dremote.web.driver.url из Jenkinsfile)
+        // Если свойство пустое (например, локальный запуск через профиль remote), берем дефолтный адрес Selenoid
+        String selenoidUrl = System.getProperty("remote.web.driver.url", "http://localhost:4444/wd/hub");
 
-        if(System.getenv("SAUCE_ACCESS_KEY") == null){
-            throw new RuntimeException("To use remote driver a Sauce lab account is required. Please assign your Sauce labs access key to the environmental variable 'sauce_access_key'");
-        }
-
-        String URL = "https://ondemand.eu-central-1.saucelabs.com/wd/hub";
+        System.out.println("INFO: Connecting to Selenoid at: " + selenoidUrl);
 
         ChromeOptions chromeOptions = new ChromeOptions();
 
-        chromeOptions.setPlatformName("Windows 10");
-        chromeOptions.setBrowserVersion("latest");
+        // Обязательные аргументы для стабильного запуска Chrome внутри Linux-контейнеров Selenoid
+        chromeOptions.addArguments("--no-sandbox");
+        chromeOptions.addArguments("--disable-dev-shm-usage");
+        chromeOptions.addArguments("--remote-allow-origins=*");
 
-        MutableCapabilities sauceCaps = new MutableCapabilities();
-        sauceCaps.setCapability("username", System.getenv("SAUCE_USERNAME"));
-        sauceCaps.setCapability("accessKey", System.getenv("SAUCE_ACCESS_KEY"));
-        sauceCaps.setCapability("name", "Restful-booker-platform");
-        sauceCaps.setCapability("extendedDebugging", true);
-        chromeOptions.setCapability("sauce:options", sauceCaps);
+        // Настройки Selenoid для отображения сессии в Selenoid UI (VNC)
+        Map<String, Object> selenoidOptions = new HashMap<>();
+        selenoidOptions.put("enableVNC", true);
+        selenoidOptions.put("enableVideo", false);
+        chromeOptions.setCapability("selenoid:options", selenoidOptions);
 
         try {
-            return new RemoteWebDriver(new URL(URL), chromeOptions);
+            return new RemoteWebDriver(new URL(selenoidUrl), chromeOptions);
         } catch (MalformedURLException e) {
-            throw new RuntimeException("WARN: An error occurred attempting to create a remote driver connection. See the following error: " + e);
+            throw new RuntimeException("WARN: An error occurred attempting to create a remote driver connection to Selenoid. See the following error: " + e);
         }
     }
 }

@@ -12,29 +12,35 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class TestSetup {
 
-    WebDriver driver;
+    protected WebDriver driver;
+
+    // Читаем переменные из Jenkinsfile флагов -D. Если их нет (запуск из IDEA) — берем дефолты для Windows
+    protected static final String BASE_UI_URL = System.getProperty("ui.base.url", "http://localhost:3003");
+    protected static final String SELENOID_URL = System.getProperty("remote.web.driver.url", ""); // Локально пусто, для Jenkins передадим урл
 
     @BeforeEach
     public void SetUp(){
-        driver = new DriverFactory().create();
-        driver.manage().timeouts().implicitlyWait(Duration.of(2, SECONDS));
+        // Передаем SELENOID_URL в фабрику. Если строка пустая — фабрика создаст локальный браузер
+        driver = new DriverFactory().create(SELENOID_URL);
+        driver.manage().timeouts().implicitlyWait(Duration.of(5, SECONDS)); // Поставим 5 секунд для стабильности в Docker
+        driver.manage().window().maximize();
     }
 
     @AfterEach
     public void TearDown(){
-        driver.quit();
+        if (driver != null) {
+            driver.quit();
+        }
     }
 
     void navigateToApplication(){
         if(System.getenv("TARGET") != null && System.getenv("TARGET").equals("production")){
-            // We load the production page up initially to gain access to the site before
-            // adding in the cookie to disabled the welcome popup. We finally have to refresh
-            // the page to ensure the cookie is read and the popup is disabled.
             driver.navigate().to("https://automationintesting.online/admin");
             driver.manage().addCookie(new Cookie("welcome", "true"));
             driver.navigate().refresh();
         } else {
-            driver.navigate().to("http://localhost:3003/admin");
+            // Теперь вместо хардкода localhost используется динамический UI URL (в Jenkins это http://rbp-assets:80)
+            driver.navigate().to(BASE_UI_URL + "/admin");
         }
     }
 
