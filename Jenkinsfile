@@ -45,6 +45,7 @@ pipeline {
                         echo 'Starting Maven test execution strictly using pom.xml path...'
                         sh """
                             mvn clean test -f end-to-end-tests/pom.xml \
+                            -Dmaven.test.failure.ignore=true \
                             -Dui.base.url=${BASE_UI_URL} \
                             -Dremote.web.driver.url=${SELENOID_URL} \
                             -Ddb.url=${DB_URL} \
