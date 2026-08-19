@@ -48,31 +48,58 @@ services:
   # =========================================================================
 
   rbp-assets:
-    build: ./assets
+    build:
+      context: ./assets
+      args:
+        BOOKING_API: http://rbp-booking:3000
+        ROOM_API: http://rbp-room:3001
+        BRANDING_API: http://rbp-branding:3002
+        AUTH_API: http://rbp-auth:3004
+        REPORT_API: http://rbp-report:3005
+        MESSAGE_API: http://rbp-message:3006
     container_name: rbp-assets
     ports:
       - "3003:80"
+    environment:
+      - BOOKING_API=http://rbp-booking:3000
+      - ROOM_API=http://rbp-room:3001
+      - BRANDING_API=http://rbp-branding:3002
+      - AUTH_API=http://rbp-auth:3004
+      - REPORT_API=http://rbp-report:3005
+      - MESSAGE_API=http://rbp-message:3006
     restart: always
     networks:
       - qa_network
 
-  rbp-booking:
-    build: ./booking
-    container_name: rbp-booking
-    ports:
-      - "3000:3000"
-    restart: always
-    networks:
-      - qa_network
 
   rbp-room:
     build: ./room
     container_name: rbp-room
     ports:
       - "3001:3001"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://hotel-db:3306/hotel_db
+      - DB_USER=qa_user
+      - DB_PASSWORD=qa_password
     restart: always
     networks:
       - qa_network
+
+
+  rbp-booking:
+      build: ./booking
+      container_name: rbp-booking
+      ports:
+        - "3000:3000"
+      environment:
+        - SPRING_PROFILES_ACTIVE=prod
+        - DB_URL=jdbc:mysql://hotel-db:3306/hotel_db
+        - DB_USER=qa_user
+        - DB_PASSWORD=qa_password
+      restart: always
+      networks:
+        - qa_network
 
   rbp-branding:
     build: ./branding

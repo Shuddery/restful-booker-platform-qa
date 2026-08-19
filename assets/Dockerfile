@@ -17,6 +17,22 @@ COPY . .
 # Next.js collects anonymous telemetry data about general usage.
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# === ВАЖНО: переменные должны быть доступны ВО ВРЕМЯ СБОРКИ ===
+ARG BOOKING_API=http://rbp-booking:3000
+ARG ROOM_API=http://rbp-room:3001
+ARG BRANDING_API=http://rbp-branding:3002
+ARG AUTH_API=http://rbp-auth:3004
+ARG REPORT_API=http://rbp-report:3005
+ARG MESSAGE_API=http://rbp-message:3006
+
+ENV BOOKING_API=$BOOKING_API
+ENV ROOM_API=$ROOM_API
+ENV BRANDING_API=$BRANDING_API
+ENV AUTH_API=$AUTH_API
+ENV REPORT_API=$REPORT_API
+ENV MESSAGE_API=$MESSAGE_API
+# ==============================================================
+
 RUN npm run build
 
 # Production image, copy all the files and run next
@@ -25,6 +41,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Эти ENV тоже оставляем (на всякий случай для runtime)
 ENV BOOKING_API=http://rbp-booking:3000
 ENV ROOM_API=http://rbp-room:3001
 ENV BRANDING_API=http://rbp-branding:3002
